@@ -1,12 +1,13 @@
 # Bacheca degli Omini
 
-Catalogo personale per collezionisti di minifigure: tutti gli omini di Harry Potter e Animali Fantastici (2001–oggi), con completamento della collezione, varianti per personaggio, rarità stimata, completezza per set e riconoscimento da foto.
+Catalogo personale per collezionisti di minifigure: tutti gli omini di Harry Potter e Animali Fantastici e di Marvel (Avengers, Spider-Man, Guardiani della Galassia, X-Men e altri), con completamento della collezione, varianti per personaggio, rarità stimata, completezza per set e riconoscimento da foto.
 
 Progetto personale e non commerciale. LEGO® è un marchio del Gruppo LEGO, che non sponsorizza, autorizza né approva questo progetto.
 
 ## Struttura
 
-- `index.html` — l'app completa (pagina singola, dati del catalogo inclusi).
+- `index.html` — l'app (pagina singola).
+- `data/catalogo.json` — il catalogo: collezioni, omini e set, generato dai file di Rebrickable.
 - `functions/api/riconosci.js` — funzione Cloudflare che riceve la foto e la inoltra a Brickognize per il riconoscimento.
 
 ## Fonti
