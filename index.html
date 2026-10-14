@@ -201,6 +201,22 @@ footer{font-size:12px;color:var(--muted);line-height:1.5;max-width:80ch}
       <option value="2017-2020">2017–2020</option>
       <option value="2021-2099">2021–oggi</option>
     </select>
+    <select class="chip" id="rarf" aria-label="Rarità">
+      <option value="">Tutte le rarità</option>
+      <option value="3">Rarissimo</option>
+      <option value="2">Raro</option>
+      <option value="1">Non comune</option>
+      <option value="0">Comune</option>
+    </select>
+    <select class="chip" id="sort" aria-label="Ordina">
+      <option value="year">Ordina: dal più vecchio</option>
+      <option value="year-desc">Ordina: dal più recente</option>
+      <option value="az">Ordina: nome A→Z</option>
+      <option value="za">Ordina: nome Z→A</option>
+      <option value="rare">Ordina: prima i più rari</option>
+      <option value="common">Ordina: prima i più comuni</option>
+      <option value="sets">Ordina: presenti in più set</option>
+    </select>
     <select class="chip" id="line" aria-label="Linea">
       <option value="">Tutte le linee</option>
     </select>
@@ -211,7 +227,7 @@ footer{font-size:12px;color:var(--muted);line-height:1.5;max-width:80ch}
 
   <footer>
     <p><b>Come calcoliamo la rarità.</b> Partiamo da quanti set contengono l'omino in tutto il catalogo. Un omino presente in un solo set sale di livello, così come uno uscito fino al 2011 (fuori produzione da molto tempo) o uno che si trova solo in set grandi da oltre 1.000 pezzi. Le minifigure da collezione in busta scendono di un livello perché sono facili da trovare. È un indicatore indicativo, non un prezzo di mercato.</p>
-    <p>Dati e immagini del catalogo: Rebrickable. Riconoscimento delle foto: Brickognize. LEGO® è un marchio del Gruppo LEGO, che non sponsorizza, autorizza né approva questa pagina. Harry Potter, Animali Fantastici, Marvel, Star Wars e i relativi personaggi sono marchi dei rispettivi proprietari. Progetto personale, non commerciale.</p>
+    <p>Dati e immagini del catalogo: Rebrickable. Riconoscimento delle foto: Brickognize. LEGO® è un marchio del Gruppo LEGO, che non sponsorizza, autorizza né approva questa pagina. Harry Potter, Animali Fantastici, Marvel, Star Wars, DC, Ninjago e i relativi personaggi sono marchi dei rispettivi proprietari. Progetto personale, non commerciale.</p>
   </footer>
 </div>
 
@@ -237,10 +253,11 @@ ALLF.forEach(f=>{f.lines=[...new Set(f.s.map(s=>setById[s]?setById[s].t:null).fi
 
 /* ---------- state ---------- */
 let owned={}; // fig id -> qty
-const st={tab:'figs',own:'all',q:'',era:'',line:'',rar:null,col:COLS[0].key};
+const st={tab:'figs',own:'all',q:'',era:'',line:'',rar:null,col:COLS[0].key,sort:'year'};
+try{const s=localStorage.getItem('bacheca-omini-sort'); if(s){st.sort=s; document.getElementById('sort').value=s}}catch(e){}
 try{const c=localStorage.getItem('bacheca-omini-col'); if(c&&colByKey[c]) st.col=c}catch(e){}
 function setCol(key){
-  st.col=key; st.line=''; st.rar=null;
+  st.col=key; st.line=''; st.rar=null; document.getElementById('rarf').value='';
   try{localStorage.setItem('bacheca-omini-col',key)}catch(e){}
   FIGS=ALLF.filter(f=>f.col===key); SETS=ALLS.filter(s=>s.col===key);
   const C=colByKey[key], yrs=FIGS.map(f=>f.y);
@@ -358,15 +375,30 @@ function cardHTML(f){
       :`<button class="add" data-inc="${f.id}">+ Ce l'ho</button>`}</div>
   </article>`;
 }
+function figCmp(a,b){
+  const s=st.sort, an=a.c.localeCompare(b.c,'it')||a.sub.localeCompare(b.sub,'it');
+  if(s==='az')return an; if(s==='za')return -an;
+  if(s==='year-desc')return b.y-a.y||an;
+  if(s==='rare')return b.r-a.r||a.k-b.k||an;
+  if(s==='common')return a.r-b.r||b.k-a.k||an;
+  if(s==='sets')return b.k-a.k||an;
+  return a.y-b.y||an;
+}
 function renderFigs(){
-  const list=filtered().sort((a,b)=>a.y-b.y||a.c.localeCompare(b.c));
+  const list=filtered().sort(figCmp);
   countEl.textContent=`${list.length} omini`;
   view.innerHTML=list.length?`<div class="grid">${list.map(cardHTML).join('')}</div>`
     :`<div class="empty">Nessun omino con questi filtri. Prova a togliere qualche filtro o a cercare un altro nome.</div>`;
 }
 function renderChars(){
   const map={}; filtered().forEach(f=>(map[f.c]=map[f.c]||[]).push(f));
-  const rows=Object.entries(map).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]));
+  const rows=Object.entries(map).sort((a,b)=>{
+    const s=st.sort, an=a[0].localeCompare(b[0],'it');
+    if(s==='az')return an; if(s==='za')return -an;
+    if(s==='year')return Math.min(...a[1].map(f=>f.y))-Math.min(...b[1].map(f=>f.y))||an;
+    if(s==='year-desc')return Math.max(...b[1].map(f=>f.y))-Math.max(...a[1].map(f=>f.y))||an;
+    if(s==='rare'||s==='common'){const ra=Math.max(...a[1].map(f=>f.r)),rb=Math.max(...b[1].map(f=>f.r));return (s==='rare'?rb-ra:ra-rb)||an}
+    return b[1].length-a[1].length||an;});
   countEl.textContent=`${rows.length} personaggi`;
   view.innerHTML=rows.length?`<div class="list">${rows.map(([c,fs])=>{const h=fs.filter(f=>owned[f.id]).length;
     return `<button class="row ${h===fs.length?'full':''}" data-char="${esc(c)}">
@@ -380,7 +412,11 @@ function renderSets(){
   const ids=new Set(filtered().map(f=>f.id));
   let rows=SETS.filter(s=>(!st.line||s.t===st.line)&&s.f.some(f=>ids.has(f))&&(!q||(s.n+' '+s.id).toLowerCase().includes(q)||s.f.some(f=>ids.has(f))));
   if(st.era){const [a,b]=st.era.split('-').map(Number);rows=rows.filter(s=>s.y>=a&&s.y<=b)}
-  rows.sort((a,b)=>{const pa=a.f.filter(f=>owned[f]).length/a.f.length,pb=b.f.filter(f=>owned[f]).length/b.f.length;return pb-pa||a.y-b.y});
+  rows.sort((a,b)=>{const s=st.sort, an=a.n.localeCompare(b.n,'it');
+    if(s==='az')return an; if(s==='za')return -an; if(s==='year')return a.y-b.y||an; if(s==='year-desc')return b.y-a.y||an;
+    if(s==='sets')return b.f.length-a.f.length||an;
+    if(s==='rare'||s==='common'){const ra=Math.max(...a.f.map(f=>byId[f]?byId[f].r:0)),rb=Math.max(...b.f.map(f=>byId[f]?byId[f].r:0));return (s==='rare'?rb-ra:ra-rb)||a.y-b.y}
+    const pa=a.f.filter(f=>owned[f]).length/a.f.length,pb=b.f.filter(f=>owned[f]).length/b.f.length;return pb-pa||a.y-b.y});
   countEl.textContent=`${rows.length} set`;
   view.innerHTML=rows.length?`<div class="list">${rows.map(s=>{const h=s.f.filter(f=>owned[f]).length;
     return `<button class="row ${h===s.f.length?'full':''}" data-set="${s.id}">
@@ -433,7 +469,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.tab){setTab(t.dataset.tab);return}
   if(t.dataset.col){if(t.dataset.col!==st.col){setCol(t.dataset.col);st.q='';document.getElementById('q').value='';render()}return}
   if(t.dataset.own){st.own=t.dataset.own;document.querySelectorAll('[data-own]').forEach(b=>b.setAttribute('aria-pressed',b===t));render();return}
-  if(t.dataset.rar!==undefined){const r=+t.dataset.rar;st.rar=st.rar===r?null:r;render();return}
+  if(t.dataset.rar!==undefined){const r=+t.dataset.rar;st.rar=st.rar===r?null:r;document.getElementById('rarf').value=st.rar===null?'':String(st.rar);render();return}
   if(t.id==='sample'){FIGS.filter(f=>f.y<=2012||f.r===0).forEach((f,i)=>{if(i%3===0)owned[f.id]=1});persist();render();return}
   if(t.id==='reset'){if(t.dataset.armed){owned={};persist();delete t.dataset.armed;t.textContent='Svuota collezione';render()}
     else{t.dataset.armed='1';t.textContent='Tocca di nuovo per confermare';setTimeout(()=>{delete t.dataset.armed;t.textContent='Svuota collezione'},3000)}return}
@@ -445,6 +481,8 @@ let qt=null;
 document.getElementById('q').addEventListener('input',e=>{clearTimeout(qt);qt=setTimeout(()=>{st.q=e.target.value;render()},150)});
 document.getElementById('era').addEventListener('change',e=>{st.era=e.target.value;render()});
 lineSel.addEventListener('change',e=>{st.line=e.target.value;render()});
+document.getElementById('rarf').addEventListener('change',e=>{st.rar=e.target.value===''?null:+e.target.value;render()});
+document.getElementById('sort').addEventListener('change',e=>{st.sort=e.target.value;try{localStorage.setItem('bacheca-omini-sort',st.sort)}catch(x){}render()});
 let rw=window.innerWidth<=560; window.addEventListener('resize',()=>{const n=window.innerWidth<=560;if(n!==rw){rw=n;renderTop()}});
 
 /* ---------- official images ---------- */

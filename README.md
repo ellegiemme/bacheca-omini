@@ -1,6 +1,6 @@
 # Bacheca degli Omini
 
-Catalogo personale per collezionisti di minifigure: tutti gli omini di Harry Potter e Animali Fantastici, Marvel (Avengers, Spider-Man, Guardiani della Galassia, X-Men e altri) e Star Wars, compresi quelli esclusivi di libri e gadget, con completamento della collezione, varianti per personaggio, rarità stimata, completezza per set e riconoscimento da foto.
+Catalogo personale per collezionisti di minifigure: tutti gli omini di Harry Potter e Animali Fantastici, Marvel (Avengers, Spider-Man, Guardiani della Galassia, X-Men e altri), Star Wars, DC e Ninjago, compresi quelli esclusivi di libri e gadget, con completamento della collezione, varianti per personaggio, rarità stimata, completezza per set e riconoscimento da foto.
 
 Progetto personale e non commerciale. LEGO® è un marchio del Gruppo LEGO, che non sponsorizza, autorizza né approva questo progetto.
 
